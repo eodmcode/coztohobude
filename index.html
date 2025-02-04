@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Šíření GIFů</title>
+    <title>GIF invaze</title>
     <style>
         * {
             margin: 0;
@@ -19,20 +19,21 @@
 
         /* Kontejner pro GIFy */
         .gif-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             align-items: center;
+            gap: 10px;
         }
 
         .gif-container img {
-            width: 400px; /* Počáteční velikost */
+            width: 150px; /* Počáteční velikost GIFu */
             height: auto;
-            margin: 5px;
         }
 
         /* Styl červeného tlačítka */
@@ -63,9 +64,7 @@
 </head>
 <body>
 
-    <div class="gif-container">
-        <img src="gif1.gif" alt="GIF">
-    </div>
+    <div class="gif-container"></div>
 
     <div class="button-container">
         <button class="button">NEMAČKAT</button>
@@ -73,28 +72,23 @@
 
     <script>
         let container = document.querySelector('.gif-container');
-        let baseSize = 400; // Počáteční velikost GIFu
+        let gifCount = 0;
+        let maxGifs = 100; // Maximální počet GIFů
+        let gifSources = ["gif1.gif", "gif2.gif"]; // Nahraď svými GIFy
 
-        function duplicateGifs() {
-            let gifs = document.querySelectorAll('.gif-container img');
+        function addGifs() {
+            if (gifCount >= maxGifs) return;
 
-            // Zmenší všechny GIFy
-            gifs.forEach(gif => {
-                let newSize = gif.clientWidth / 2;
-                if (newSize > 5) { // Limit, aby nebyly příliš malé
-                    gif.style.width = newSize + "px";
-                }
-            });
-
-            // Zdvojnásobí počet GIFů
-            let currentGifs = Array.from(gifs);
-            currentGifs.forEach(gif => {
-                let clone = gif.cloneNode(true);
-                container.appendChild(clone);
-            });
+            for (let i = 0; i < 2; i++) { // Přidáme dva GIFy najednou
+                let gif = document.createElement("img");
+                gif.src = gifSources[gifCount % gifSources.length]; // Střídáme GIFy
+                container.appendChild(gif);
+                gifCount++;
+                if (gifCount >= maxGifs) break;
+            }
         }
 
-        setInterval(duplicateGifs, 100); // Každých 0.1 sekundy
+        setInterval(addGifs, 500); // Každých 0.5 sekundy přidáme 2 GIFy
     </script>
 
 </body>
