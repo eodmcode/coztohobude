@@ -1,2 +1,2 @@
-# coztohobude
+# uff
 výbušnej kód
