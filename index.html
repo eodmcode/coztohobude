@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Střídající se GIFy</title>
+    <title>Šíření GIFů</title>
     <style>
         * {
             margin: 0;
@@ -14,27 +14,25 @@
         body {
             font-family: Arial, sans-serif;
             overflow: hidden;
+            background-color: black;
         }
 
-        /* Kontejner pro střídající se GIFy */
-        .background-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-        }
-
-        .background-container img {
+        /* Kontejner pro GIFy */
+        .gif-container {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: none;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .gif-container img {
+            width: 400px; /* Počáteční velikost */
+            height: auto;
+            margin: 5px;
         }
 
         /* Styl červeného tlačítka */
@@ -43,6 +41,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            z-index: 10;
         }
 
         .button {
@@ -64,9 +63,8 @@
 </head>
 <body>
 
-    <div class="background-container">
-        <img src="aliens-alien.gif" alt="GIF 1">
-        <img src="yay.gif" alt="GIF 2">
+    <div class="gif-container">
+        <img src="gif1.gif" alt="GIF">
     </div>
 
     <div class="button-container">
@@ -74,17 +72,29 @@
     </div>
 
     <script>
-        let gifs = document.querySelectorAll('.background-container img');
-        let index = 0;
+        let container = document.querySelector('.gif-container');
+        let baseSize = 400; // Počáteční velikost GIFu
 
-        function changeGif() {
-            gifs.forEach(gif => gif.style.display = 'none');
-            gifs[index].style.display = 'block';
-            index = (index + 1) % gifs.length;
+        function duplicateGifs() {
+            let gifs = document.querySelectorAll('.gif-container img');
+
+            // Zmenší všechny GIFy
+            gifs.forEach(gif => {
+                let newSize = gif.clientWidth / 2;
+                if (newSize > 5) { // Limit, aby nebyly příliš malé
+                    gif.style.width = newSize + "px";
+                }
+            });
+
+            // Zdvojnásobí počet GIFů
+            let currentGifs = Array.from(gifs);
+            currentGifs.forEach(gif => {
+                let clone = gif.cloneNode(true);
+                container.appendChild(clone);
+            });
         }
 
-        changeGif();
-        setInterval(changeGif, 3000);
+        setInterval(duplicateGifs, 100); // Každých 0.1 sekundy
     </script>
 
 </body>
