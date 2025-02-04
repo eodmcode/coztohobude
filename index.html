@@ -1,95 +1,84 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GIF invaze</title>
+    <title>Expanding GIFs</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
-            font-family: Arial, sans-serif;
             overflow: hidden;
-            background-color: black;
+            background: black;
+            position: relative;
         }
-
-        /* Kontejner pro GIFy */
         .gif-container {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             display: flex;
             flex-wrap: wrap;
-            justify-content: center;
+            justify-content: space-around;
             align-items: center;
-            gap: 10px;
         }
-
         .gif-container img {
-            width: 150px; /* Počáteční velikost GIFu */
-            height: auto;
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            position: absolute;
         }
-
-        /* Styl červeného tlačítka */
         .button-container {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            z-index: 10;
         }
-
-        .button {
-            background-color: red;
+        .dont-click {
+            background: red;
             color: white;
+            padding: 15px 30px;
             font-size: 24px;
-            padding: 20px 40px;
             border: none;
             cursor: pointer;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-            transition: 0.3s;
-        }
-
-        .button:hover {
-            background-color: darkred;
         }
     </style>
 </head>
 <body>
-
-    <div class="gif-container"></div>
-
+    <div class="gif-container" id="gifContainer"></div>
     <div class="button-container">
-        <button class="button">NEMAČKAT</button>
+        <button class="dont-click">Don't Click</button>
     </div>
 
     <script>
-        let container = document.querySelector('.gif-container');
-        let gifCount = 0;
-        let maxGifs = 100; // Maximální počet GIFů
-        let gifSources = ["yay.gif", "aliens-alien.gif"]; // Nahraď svými GIFy
+        const gifContainer = document.getElementById("gifContainer");
+        const gifUrl = "https://media1.tenor.com/m/FHd4U7v9C1gAAAAC/crazy-dance.gif"; // Replace with desired GIF URL
+        let gifCount = 4;
+        const maxGifs = 80;
 
-        function addGifs() {
-            if (gifCount >= maxGifs) return;
-
-            for (let i = 0; i < 2; i++) { // Přidáme dva GIFy najednou
-                let gif = document.createElement("img");
-                gif.src = gifSources[gifCount % gifSources.length]; // Střídáme GIFy
-                container.appendChild(gif);
-                gifCount++;
-                if (gifCount >= maxGifs) break;
+        function addGifs(count) {
+            for (let i = 0; i < count; i++) {
+                if (gifContainer.children.length >= maxGifs) return;
+                let img = document.createElement("img");
+                img.src = gifUrl;
+                img.style.left = Math.random() * 100 + "vw";
+                img.style.top = Math.random() * 100 + "vh";
+                gifContainer.appendChild(img);
             }
         }
 
-        setInterval(addGifs, 500); // Každých 0.5 sekundy přidáme 2 GIFy
+        addGifs(gifCount);
+        
+        let interval = setInterval(() => {
+            addGifs(4);
+            if (gifContainer.children.length >= maxGifs) {
+                clearInterval(interval);
+            }
+        }, 2000);
     </script>
-
 </body>
 </html>
