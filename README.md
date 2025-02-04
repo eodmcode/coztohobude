@@ -1,0 +1,2 @@
+# coztohobude
+výbušnej kód
