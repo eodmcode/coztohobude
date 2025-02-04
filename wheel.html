@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GIF invaze</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            background-color: black;
+        }
+
+        /* Kontejner pro GIFy */
+        .gif-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .gif-container img {
+            width: 150px; /* Počáteční velikost GIFu */
+            height: auto;
+        }
+
+        /* Styl červeného tlačítka */
+        .button-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+
+        .button {
+            background-color: red;
+            color: white;
+            font-size: 24px;
+            padding: 20px 40px;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            transition: 0.3s;
+        }
+
+        .button:hover {
+            background-color: darkred;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="gif-container"></div>
+
+    <div class="button-container">
+        <button class="button">NEMAČKAT</button>
+    </div>
+
+    <script>
+        let container = document.querySelector('.gif-container');
+        let gifCount = 0;
+        let maxGifs = 100; // Maximální počet GIFů
+        let gifSources = ["gif1.gif", "gif2.gif"]; // Nahraď svými GIFy
+
+        function addGifs() {
+            if (gifCount >= maxGifs) return;
+
+            for (let i = 0; i < 2; i++) { // Přidáme dva GIFy najednou
+                let gif = document.createElement("img");
+                gif.src = gifSources[gifCount % gifSources.length]; // Střídáme GIFy
+                container.appendChild(gif);
+                gifCount++;
+                if (gifCount >= maxGifs) break;
+            }
+        }
+
+        setInterval(addGifs, 500); // Každých 0.5 sekundy přidáme 2 GIFy
+    </script>
+
+</body>
+</html>
