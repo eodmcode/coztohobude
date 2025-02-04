@@ -15,7 +15,7 @@
             background: black;
             position: relative;
         }
-        .gif-container {
+        .gif-container, .gif-container2 {
             position: absolute;
             top: 0;
             left: 0;
@@ -26,7 +26,7 @@
             justify-content: space-around;
             align-items: center;
         }
-        .gif-container img {
+        .gif-container img, .gif-container2 img {
             width: 150px;
             height: 150px;
             object-fit: cover;
@@ -41,41 +41,53 @@
         .dont-click {
             background: red;
             color: white;
-            padding: 15px 30px;
+            padding: 20px;
             font-size: 24px;
             border: none;
             cursor: pointer;
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
     </style>
 </head>
 <body>
     <div class="gif-container" id="gifContainer"></div>
+    <div class="gif-container2" id="gifContainer2"></div>
     <div class="button-container">
         <button class="dont-click">Don't Click</button>
     </div>
 
     <script>
         const gifContainer = document.getElementById("gifContainer");
-        const gifUrl = "crazy.gif"; // Replace with desired GIF URL
+        const gifContainer2 = document.getElementById("gifContainer2");
+        const gifUrl = "crazy.gif"; // Replace with your actual GitHub repository URL
+        const gifUrl2 = "yay.gif"; // Replace with your second GIF URL
         let gifCount = 4;
         const maxGifs = 80;
 
-        function addGifs(count) {
+        function addGifs(container, url, count) {
             for (let i = 0; i < count; i++) {
-                if (gifContainer.children.length >= maxGifs) return;
+                if (container.children.length >= maxGifs) return;
                 let img = document.createElement("img");
-                img.src = gifUrl;
+                img.src = url;
                 img.style.left = Math.random() * 100 + "vw";
                 img.style.top = Math.random() * 100 + "vh";
-                gifContainer.appendChild(img);
+                container.appendChild(img);
             }
         }
 
-        addGifs(gifCount);
+        addGifs(gifContainer, gifUrl, gifCount);
+        addGifs(gifContainer2, gifUrl2, gifCount);
         
         let interval = setInterval(() => {
-            addGifs(4);
-            if (gifContainer.children.length >= maxGifs) {
+            addGifs(gifContainer, gifUrl, 4);
+            addGifs(gifContainer2, gifUrl2, 4);
+            if (gifContainer.children.length >= maxGifs && gifContainer2.children.length >= maxGifs) {
                 clearInterval(interval);
             }
         }, 2000);
