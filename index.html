@@ -1,102 +1,264 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expanding GIFs</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            overflow: hidden;
-            background: black;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .gif-container, .gif-container2 {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-around;
-            align-items: center;
-        }
-        .gif-container img, .gif-container2 img {
-            width: 150px;
-            height: 150px;
-            object-fit: cover;
-            position: absolute;
-        }
-        .button-container {
-            position: absolute;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100vw;
-            height: 100vh;
-        }
-        .dont-click {
-            background: red;
-            color: white;
-            padding: 20px;
-            font-size: 24px;
-            border: none;
-            cursor: pointer;
-            border-radius: 50%;
-            width: 100px;
-            height: 100px;
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expanding GIFs</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      overflow: hidden;
+      background: black;
+      position: relative;
+      height: 100vh;
+    }
+    /* Všechny gif kontejnery mají stejné vlastnosti */
+    .gif-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+    /* Obal pro gif – nyní 100×100px */
+    .gif-wrapper {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+    }
+    .gif-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;  /* Kulatý tvar */
+    }
+    /* Přechod pro efekt náhodného škálování */
+    .random-scale {
+      transition: transform 0.5s ease-in-out;
+    }
+    /* Animace nafukování/vyfukování – každému čtvrtému gifovi ji přidáme */
+    @keyframes balloon {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+    .balloon {
+      animation: balloon 3s ease-in-out infinite;
+    }
+    .button-container {
+      position: absolute;
+      width: 100vw;
+      height: 100vh;
+    }
+    .dont-click {
+      background: red;
+      color: white;
+      padding: 20px;
+      font-size: 24px;
+      border: none;
+      cursor: pointer;
+      border-radius: 50%;
+      width: 100px;
+      height: 100px;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: absolute;
+      /* Výchozí pozice tlačítka uprostřed obrazovky */
+      left: calc(50% - 50px);
+      top: calc(50% - 50px);
+    }
+    /* Animace výbuchu pro tlačítko */
+    @keyframes explode {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.8); opacity: 0.5; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .explode {
+      animation: explode 0.5s ease-out;
+    }
+  </style>
 </head>
 <body>
-    <div class="gif-container" id="gifContainer"></div>
-    <div class="gif-container2" id="gifContainer2"></div>
-    <div class="button-container">
-        <button class="dont-click" onclick="window.location.href='wheel.html'">Don't Click</button>
-    </div>
+  <!-- Čtyři kontejnery – jeden pro každý gif soubor -->
+  <div class="gif-container" id="gifContainer"></div>
+  <div class="gif-container" id="gifContainer2"></div>
+  <div class="gif-container" id="gifContainer3"></div>
+  <div class="gif-container" id="gifContainer4"></div>
 
-    <script>
-        const gifContainer = document.getElementById("gifContainer");
-        const gifContainer2 = document.getElementById("gifContainer2");
-        const gifUrl = "crazy.gif"; // Replace with your actual GitHub repository URL
-        const gifUrl2 = "yay.gif"; // Replace with your second GIF URL
-        let gifCount = 4;
-        const maxGifs = 80;
+  <div class="button-container">
+    <button class="dont-click" id="dontClickButton">Tak dělej!</button>
+  </div>
 
-        function addGifs(container, url, count) {
-            for (let i = 0; i < count; i++) {
-                if (container.children.length >= maxGifs) return;
-                let img = document.createElement("img");
-                img.src = url;
-                img.style.left = Math.random() * 100 + "vw";
-                img.style.top = Math.random() * 100 + "vh";
-                container.appendChild(img);
-            }
+  <!-- Skrytý YouTube přehrávač – umístěn mimo viditelnou oblast -->
+  <div id="youtubePlayer" style="position: absolute; left: -9999px; width: 0; height: 0;">
+    <iframe id="ytplayer" type="text/html" width="0" height="0"
+      src="https://www.youtube.com/watch?v=xHuXXaXmStk"
+      frameborder="0">
+    </iframe>
+  </div>
+
+  <script>
+    // Referenční prvky kontejnerů
+    const gifContainer  = document.getElementById("gifContainer");
+    const gifContainer2 = document.getElementById("gifContainer2");
+    const gifContainer3 = document.getElementById("gifContainer3");
+    const gifContainer4 = document.getElementById("gifContainer4");
+
+    // URL gifů – nahraďte cestami ke svým souborům
+    const gifUrl  = "crazy.gif";
+    const gifUrl2 = "yay.gif";
+    const gifUrl3 = "funny.gif";  // nový gif soubor 3
+    const gifUrl4 = "cool.gif";   // nový gif soubor 4
+
+    let gifCount = 4;       // počáteční počet gifů na každý kontejner
+    const maxGifs = 100;    // celkový maximální počet gifů, zvýšeno z 60 na 100
+    let gifsArray = [];     // Pole pro uložení dat o každém gifu (pozice, rychlost, atd.)
+    let globalGifCounter = 0; // Globální čítač pro speciální efekty
+
+    // Funkce, která přidá do zadaného kontejneru zadaný počet gifů z URL
+    function addGifs(container, url, count) {
+      for (let i = 0; i < count; i++) {
+        if (gifsArray.length >= maxGifs) return;
+        globalGifCounter++;
+
+        // Vytvoříme obal pro gif
+        let wrapper = document.createElement("div");
+        wrapper.classList.add("gif-wrapper");
+
+        // Vytvoříme samotný obrázek
+        let img = document.createElement("img");
+        img.src = url;
+        // Každý čtvrtý gif získá animaci balónu
+        if (globalGifCounter % 4 === 0) {
+          img.classList.add("balloon");
+        }
+        // Vložíme obrázek do obalu
+        wrapper.appendChild(img);
+
+        // Náhodná počáteční pozice s ohledem na rozměry gifu (100×100)
+        const gifWidth = 100;
+        const gifHeight = 100;
+        let posX = Math.random() * (window.innerWidth - gifWidth);
+        let posY = Math.random() * (window.innerHeight - gifHeight);
+        wrapper.style.left = posX + "px";
+        wrapper.style.top  = posY + "px";
+
+        // Každý třetí gif získá efekt náhodného škálování
+        let isRandom = false;
+        if (globalGifCounter % 3 === 0) {
+          wrapper.classList.add("random-scale");
+          isRandom = true;
         }
 
-        addGifs(gifContainer, gifUrl, gifCount);
-        addGifs(gifContainer2, gifUrl2, gifCount);
-        
-        let interval = setInterval(() => {
-            addGifs(gifContainer, gifUrl, 4);
-            addGifs(gifContainer2, gifUrl2, 4);
-            if (gifContainer.children.length >= maxGifs && gifContainer2.children.length >= maxGifs) {
-                clearInterval(interval);
-            }
-        }, 2000);
-    </script>
+        // Přidáme obal do kontejneru
+        container.appendChild(wrapper);
+
+        // Náhodný vektor pohybu (efekt odrážení jako u DVD loga)
+        let vx = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1);
+        let vy = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1);
+
+        // Uložíme data o gifu
+        gifsArray.push({
+          element: wrapper,
+          x: posX,
+          y: posY,
+          vx: vx,
+          vy: vy,
+          width: gifWidth,
+          height: gifHeight,
+          isRandom: isRandom
+        });
+      }
+    }
+
+    // Přidáme počáteční sadu gifů do všech kontejnerů
+    addGifs(gifContainer,  gifUrl,  4);
+    addGifs(gifContainer2, gifUrl2, 4);
+    addGifs(gifContainer3, gifUrl3, 4);
+    addGifs(gifContainer4, gifUrl4, 4);
+
+    // Každé 2 sekundy přidáme další sadu gifů (dokud nedosáhneme maxGifs)
+    let interval = setInterval(() => {
+      addGifs(gifContainer,  gifUrl,  4);
+      addGifs(gifContainer2, gifUrl2, 4);
+      addGifs(gifContainer3, gifUrl3, 4);
+      addGifs(gifContainer4, gifUrl4, 4);
+      if (gifsArray.length >= maxGifs) {
+        clearInterval(interval);
+      }
+    }, 2000);
+
+    // Animace – aktualizace pozic gifů (simulace pohybu s odrazy od okrajů)
+    function updateGifs() {
+      for (let gif of gifsArray) {
+        gif.x += gif.vx;
+        gif.y += gif.vy;
+
+        // Odraz od levého a horního okraje
+        if (gif.x <= 0) {
+          gif.x = 0;
+          gif.vx = -gif.vx;
+        }
+        if (gif.y <= 0) {
+          gif.y = 0;
+          gif.vy = -gif.vy;
+        }
+        // Odraz od pravého a spodního okraje
+        if (gif.x >= window.innerWidth - gif.width) {
+          gif.x = window.innerWidth - gif.width;
+          gif.vx = -gif.vx;
+        }
+        if (gif.y >= window.innerHeight - gif.height) {
+          gif.y = window.innerHeight - gif.height;
+          gif.vy = -gif.vy;
+        }
+
+        gif.element.style.left = gif.x + "px";
+        gif.element.style.top  = gif.y + "px";
+      }
+      requestAnimationFrame(updateGifs);
+    }
+    requestAnimationFrame(updateGifs);
+
+    // Náhodné škálování pro každý třetí gif – každé 2 sekundy nastavíme nový náhodný faktor
+    setInterval(() => {
+      gifsArray.forEach(gif => {
+        if (gif.isRandom) {
+          // Náhodná hodnota mezi 0.8 a 1.5
+          let scale = (0.8 + Math.random() * 0.7).toFixed(2);
+          gif.element.style.transform = "scale(" + scale + ")";
+        }
+      });
+    }, 2000);
+
+    // Chování tlačítka – při každém kliknutí se přesune s explozní animací; přesměrování až po pátém kliknutí
+    const button = document.getElementById("dontClickButton");
+    let buttonClicks = 0;
+    button.addEventListener("click", function() {
+      buttonClicks++;
+      // Přidáme třídu "explode" pro animaci výbuchu a poté ji odstraníme
+      button.classList.add("explode");
+      button.addEventListener("animationend", function handler() {
+        button.classList.remove("explode");
+        button.removeEventListener("animationend", handler);
+      });
+      if (buttonClicks < 5) {
+        const btnWidth = button.offsetWidth;
+        const btnHeight = button.offsetHeight;
+        let newLeft = Math.random() * (window.innerWidth - btnWidth);
+        let newTop  = Math.random() * (window.innerHeight - btnHeight);
+        button.style.left = newLeft + "px";
+        button.style.top  = newTop + "px";
+      } else {
+        window.location.href = "wheel.html";
+      }
+    });
+  </script>
 </body>
 </html>
