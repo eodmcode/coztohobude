@@ -4,36 +4,49 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Výherní Automat</title>
+  <!-- Import Google Font Montserrat -->
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
   <style>
+    /* Základní styly */
     body {
-      background: #222;
-      color: #fff;
-      text-align: center;
-      font-family: Arial, sans-serif;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+      color: #fff;
+      font-family: 'Montserrat', sans-serif;
+      text-align: center;
     }
     h1 {
-      margin-bottom: 20px;
+      margin-top: 40px;
+      font-size: 3rem;
+      letter-spacing: 2px;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.5);
     }
-    /* Zvětšený kontejner automatu */
+    /* Kontejner slot machine s jemným průhledným pozadím a stínem */
     .slot-machine {
-      margin: 20px auto;
+      margin: 40px auto;
       width: 600px;
+      padding: 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
     .reels {
       display: flex;
       justify-content: center;
+      margin-bottom: 20px;
     }
-    /* Zvětšené válce (150×150 px) */
+    /* Válce – 150×150 px, zaoblené rohy a jemné stíny */
     .reel {
       width: 150px;
       height: 150px;
       border: 2px solid #fff;
+      border-radius: 10px;
       margin: 0 10px;
       overflow: hidden;
       position: relative;
       background: #000;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.5);
     }
     .reel-inner {
       position: absolute;
@@ -43,18 +56,24 @@
     .reel img {
       width: 150px;
       height: 150px;
-      display: block;
+      object-fit: cover;
     }
-    /* Tlačítko – zvětšené, s větším písmem, větším paddingem a červeným pozadím */
+    /* Tlačítko s gradientním pozadím a efektem při hoveru */
     .spin-btn {
       padding: 15px 30px;
       font-size: 24px;
-      margin-top: 20px;
       cursor: pointer;
-      background: #ff0000;
+      background: linear-gradient(45deg, #ff416c, #ff4b2b);
       border: none;
-      border-radius: 5px;
+      border-radius: 50px;
       color: #fff;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      margin-bottom: 20px;
+    }
+    .spin-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
     }
     .spin-btn:disabled {
       opacity: 0.5;
@@ -63,6 +82,7 @@
     .result {
       margin-top: 20px;
       font-size: 24px;
+      text-shadow: 1px 1px 5px rgba(0,0,0,0.5);
     }
     /* Vycentrovaný obrázek při výhře s vlnící animací */
     #prizeImage {
@@ -75,7 +95,6 @@
       z-index: 999;
       animation: wave 2s infinite;
     }
-    /* Keyframes pro vlnící animaci */
     @keyframes wave {
       0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
       25% { transform: translate(-50%, -50%) scale(1.1) rotate(5deg); }
@@ -83,7 +102,7 @@
       75% { transform: translate(-50%, -50%) scale(1.1) rotate(-5deg); }
       100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
     }
-    /* Kontejner pro gif pozadí – nyní bez atributu src a se zvýšeným z-indexem */
+    /* Kontejner pro gif pozadí – 250 gifů, umístěných náhodně */
     #gifBackground {
       position: fixed;
       top: 0;
@@ -93,6 +112,9 @@
       pointer-events: none;
       z-index: 1;
       display: none;
+    }
+    #gifBackground img {
+      opacity: 0.8;
     }
   </style>
 </head>
@@ -111,16 +133,12 @@
       </div>
     </div>
   </div>
-  <!-- Text tlačítka změněn na "Mačkej!" -->
   <button class="spin-btn" id="spinBtn">Mačkej!</button>
   <div class="result" id="result"></div>
-  <!-- Obrázek, který se zobrazí při výhře, vycentrovaný na obrazovce s animací -->
   <img id="prizeImage" src="voucher.png" alt="Gratulujeme, vyhrál(a) jsi!">
-  <!-- Kontejner pro gif pozadí -->
   <div id="gifBackground"></div>
-  <!-- Audio přehrávač – soubor se spustí od 1:05 (65 s) -->
   <audio id="prizeAudio" src="Spor - Obsession.mp3"></audio>
-
+  
   <script>
     document.addEventListener("DOMContentLoaded", function() {
       // Pole obrázků symbolů (celkem 5)
@@ -129,17 +147,15 @@
       let spinCount = 0;
       let finalIndices = [null, null, null];
       let reelsFinished = 0;
-      // Výška symbolu – 150 px (kvůli zvětšeným válcům)
       const symbolHeight = 150;
       
-      // Reference na elementy jednotlivých válců
       const reelElements = [
         document.getElementById("reel1").querySelector(".reel-inner"),
         document.getElementById("reel2").querySelector(".reel-inner"),
         document.getElementById("reel3").querySelector(".reel-inner")
       ];
       
-      // Inicializace válců – pro plynulý posun použijeme dvakrát opakovaný seznam symbolů
+      // Inicializace válců – každý válec obsahuje dvakrát opakovaný seznam symbolů
       function initReels() {
         reelElements.forEach(function(reelInner) {
           reelInner.innerHTML = "";
@@ -163,19 +179,19 @@
       const prizeAudio = document.getElementById("prizeAudio");
       const gifBackground = document.getElementById("gifBackground");
       
-      // Přehrání mp3 od 1:05 (65 sekund)
+      // Funkce pro přehrání mp3 od 1:05 (65 sekund)
       function playPrizeSound() {
         prizeAudio.currentTime = 65;
         prizeAudio.play();
       }
       
-      // Funkce, která vytvoří 250 gifů na pozadí (200 + 50 navíc)
+      // Funkce, která vytvoří 250 gifů na pozadí
       function launchGifs() {
         gifBackground.innerHTML = "";
         gifBackground.style.display = "block";
         for (let i = 0; i < 250; i++) {
           const img = document.createElement("img");
-          img.src = "cat.gif"; // Ujistěte se, že tento soubor existuje
+          img.src = "yay.gif"; // Ujistěte se, že tento soubor existuje
           img.style.position = "absolute";
           img.style.top = Math.random() * 100 + "%";
           img.style.left = Math.random() * 100 + "%";
@@ -193,7 +209,6 @@
         reelsFinished = 0;
         spinCount++;
         
-        // Spuštění animace pro každý válec
         reelElements.forEach(function(reelInner, index) {
           let finalIndex = Math.floor(Math.random() * symbols.length);
           finalIndices[index] = finalIndex;
@@ -215,11 +230,9 @@
         });
       });
       
-      // Vyhodnocení výsledku spinů
       function evaluateResult() {
-        // Pokud je spinCount mezi 10 a 15, výhra je jistá – nuceně nastavíme stejné symboly
         if (spinCount >= 10 && spinCount <= 15) {
-          const forcedIndex = 0; // Můžete zvolit libovolný index
+          const forcedIndex = 0;
           finalIndices = [forcedIndex, forcedIndex, forcedIndex];
           reelElements.forEach(function(reelInner) {
             reelInner.style.transition = "none";
@@ -232,7 +245,6 @@
         } else if (spinCount < 10) {
           resultDiv.textContent = "Tak ale děleeeej";
         } else {
-          // Pro spinCount vyšší než 15 – výhra je jen při shodě všech symbolů
           if (finalIndices[0] === finalIndices[1] && finalIndices[1] === finalIndices[2]) {
             resultDiv.textContent = "Všechno nejlepší!";
             prizeImage.style.display = "block";
