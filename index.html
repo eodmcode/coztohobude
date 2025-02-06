@@ -10,7 +10,8 @@
     :root {
       --primary-color: #ff6b6b;
       --secondary-color: #f06595;
-      --bg-gradient: linear-gradient(135deg, #1f1c2c, #928dab);
+      /* Tmavší gradient – z černé po velmi tmavou šedou */
+      --bg-gradient: linear-gradient(135deg, #000000, #1a1a1a);
       --button-gradient: linear-gradient(45deg, #ff6b6b, #f06595);
     }
     * {
@@ -119,71 +120,68 @@
     <button class="dont-click" id="dontClickButton">Tak dělej!</button>
   </div>
 
-  <!-- Skrytý přehrávač (mp3 soubor) – umístěn mimo viditelnou oblast -->
-  <div id="youtubePlayer" style="position: absolute; left: -9999px; width: 0; height: 0;">
-    <iframe id="ytplayer" type="text/html" width="0" height="0"
-      src="Spor - Obsession.mp3"
-      frameborder="0">
-    </iframe>
-  </div>
+  <!-- Odebraný video přehrávač -->
+
+  <!-- Audio element – odtlumený a bez autoplay, spustí se až po prvním kliknutí -->
+  <audio id="bgAudio" src="Nero.mp3" loop style="display:none;"></audio>
 
   <script>
-    // Referenční prvky kontejnerů pro GIFy
+    // Pokusíme se inicializovat audio (ale spustíme ho až při prvním kliknutí)
+    document.addEventListener("DOMContentLoaded", function() {
+      const audio = document.getElementById("bgAudio");
+      // Přednastavíme audio na ztlumené, aby prohlížeč neblokoval jeho přehrání
+      audio.muted = true;
+      // Zkuste přehrát ztlumené audio – prohlížeč by to měl povolit
+      let playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          console.log("Ztlumené audio se spustilo.");
+        }).catch(error => {
+          console.log("Automatické přehrávání ztlumeného audia nebylo povoleno:", error);
+        });
+      }
+    });
+
+    // Zbytek kódu (pro GIFy a tlačítko) zůstává stejný...
     const gifContainer  = document.getElementById("gifContainer");
     const gifContainer2 = document.getElementById("gifContainer2");
     const gifContainer3 = document.getElementById("gifContainer3");
     const gifContainer4 = document.getElementById("gifContainer4");
 
-    // Cesty ke GIF souborům – upravte podle vlastních zdrojů
     const gifUrl  = "crazy.gif";
     const gifUrl2 = "yay.gif";
     const gifUrl3 = "cat.gif";
     const gifUrl4 = "explosion.gif";
 
-    let gifCount = 4;       // Počáteční počet GIFů na každý kontejner
-    const maxGifs = 100;    // Maximální počet GIFů
-    let gifsArray = [];     // Pole pro uložení dat o jednotlivých GIFech
-    let globalGifCounter = 0; // Globální čítač pro speciální efekty
+    let gifCount = 4;
+    const maxGifs = 100;
+    let gifsArray = [];
+    let globalGifCounter = 0;
 
-    // Funkce pro přidání GIFů do zadaného kontejneru
     function addGifs(container, url, count) {
       for (let i = 0; i < count; i++) {
         if (gifsArray.length >= maxGifs) return;
         globalGifCounter++;
-
-        // Vytvoření obalu pro jeden GIF
         let wrapper = document.createElement("div");
         wrapper.classList.add("gif-wrapper");
-
-        // Vytvoření obrázku a nastavení cesty
         let img = document.createElement("img");
         img.src = url;
-        // Každý čtvrtý GIF dostane animaci "balloon"
         if (globalGifCounter % 4 === 0) {
           img.classList.add("balloon");
         }
         wrapper.appendChild(img);
-
-        // Náhodná počáteční pozice (s ohledem na rozměry)
         const gifWidth = 100;
         const gifHeight = 100;
         let posX = Math.random() * (window.innerWidth - gifWidth);
         let posY = Math.random() * (window.innerHeight - gifHeight);
         wrapper.style.left = posX + "px";
         wrapper.style.top  = posY + "px";
-
-        // Každý třetí GIF získá efekt náhodného škálování
         if (globalGifCounter % 3 === 0) {
           wrapper.classList.add("random-scale");
         }
-
         container.appendChild(wrapper);
-
-        // Nastavení náhodného vektoru pohybu (podobně jako u klasického DVD loga)
         let vx = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1);
         let vy = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1);
-
-        // Uložení dat o GIFu do pole
         gifsArray.push({
           element: wrapper,
           x: posX,
@@ -197,13 +195,11 @@
       }
     }
 
-    // Přidání počáteční sady GIFů do všech kontejnerů
     addGifs(gifContainer,  gifUrl,  4);
     addGifs(gifContainer2, gifUrl2, 4);
     addGifs(gifContainer3, gifUrl3, 4);
     addGifs(gifContainer4, gifUrl4, 4);
     
-    // Každé 2 sekundy se přidá další sada GIFů, dokud nedosáhneme maxima
     let interval = setInterval(() => {
       addGifs(gifContainer,  gifUrl,  4);
       addGifs(gifContainer2, gifUrl2, 4);
@@ -214,12 +210,10 @@
       }
     }, 2000);
 
-    // Funkce pro aktualizaci pozic GIFů – simulace pohybu s odrazy od okrajů
     function updateGifs() {
       for (let gif of gifsArray) {
         gif.x += gif.vx;
         gif.y += gif.vy;
-
         if (gif.x <= 0) {
           gif.x = 0;
           gif.vx = -gif.vx;
@@ -243,7 +237,6 @@
     }
     requestAnimationFrame(updateGifs);
 
-    // Každé 2 sekundy se u každého třetího GIFu nastaví náhodná škála
     setInterval(() => {
       gifsArray.forEach(gif => {
         if (gif.isRandom) {
@@ -253,11 +246,22 @@
       });
     }, 2000);
 
-    // Chování tlačítka – při každém kliknutí se tlačítko přesune s explozní animací
     const button = document.getElementById("dontClickButton");
     let buttonClicks = 0;
     button.addEventListener("click", function() {
       buttonClicks++;
+
+      // Při prvním kliknutí odtlumíme a spustíme audio
+      if (buttonClicks === 1) {
+        const audio = document.getElementById("bgAudio");
+        audio.muted = false;
+        audio.play().then(() => {
+          console.log("Audio přehrává.");
+        }).catch(error => {
+          console.log("Chyba při přehrávání audia:", error);
+        });
+      }
+
       button.classList.add("explode");
       button.addEventListener("animationend", function handler() {
         button.classList.remove("explode");
