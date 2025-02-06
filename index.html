@@ -1,22 +1,34 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cs">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Expanding GIFs</title>
+  <!-- Import Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary-color: #ff6b6b;
+      --secondary-color: #f06595;
+      --bg-gradient: linear-gradient(135deg, #1f1c2c, #928dab);
+      --button-gradient: linear-gradient(45deg, #ff6b6b, #f06595);
+    }
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
     body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--bg-gradient);
       overflow: hidden;
-      background: black;
       position: relative;
       height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    /* Všechny gif kontejnery mají stejné vlastnosti */
+    /* GIF kontejnery pokrývají celou obrazovku */
     .gif-container {
       position: absolute;
       top: 0;
@@ -24,23 +36,25 @@
       width: 100vw;
       height: 100vh;
     }
-    /* Obal pro gif – nyní 100×100px */
+    /* Obal pro jeden GIF – 100×100 px s jemným stínem */
     .gif-wrapper {
       position: absolute;
       width: 100px;
       height: 100px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     }
     .gif-wrapper img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      border-radius: 50%;  /* Kulatý tvar */
+      border-radius: 50%;
+      transition: transform 0.3s;
     }
-    /* Přechod pro efekt náhodného škálování */
+    /* Efekt plynulého škálování u některých GIFů */
     .random-scale {
       transition: transform 0.5s ease-in-out;
     }
-    /* Animace nafukování/vyfukování – každému čtvrtému gifovi ji přidáme */
+    /* Animace balónu u každého 4. GIFu */
     @keyframes balloon {
       0% { transform: scale(1); }
       50% { transform: scale(1.3); }
@@ -49,31 +63,41 @@
     .balloon {
       animation: balloon 3s ease-in-out infinite;
     }
+    /* Kontejner pro tlačítko – centrovaný přes celou obrazovku */
     .button-container {
       position: absolute;
       width: 100vw;
       height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+    /* Tlačítko s gradientním pozadím, zaoblením a hover efektem */
     .dont-click {
-      background: red;
+      background: var(--button-gradient);
       color: white;
       padding: 20px;
       font-size: 24px;
       border: none;
       cursor: pointer;
       border-radius: 50%;
-      width: 100px;
-      height: 100px;
+      width: 120px;
+      height: 120px;
       text-align: center;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       position: absolute;
-      /* Výchozí pozice tlačítka uprostřed obrazovky */
-      left: calc(50% - 50px);
-      top: calc(50% - 50px);
+      left: calc(50% - 60px);
+      top: calc(50% - 60px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      transition: transform 0.3s, box-shadow 0.3s;
     }
-    /* Animace výbuchu pro tlačítko */
+    .dont-click:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+    }
+    /* Animace výbuchu pro tlačítko při kliknutí */
     @keyframes explode {
       0% { transform: scale(1); opacity: 1; }
       50% { transform: scale(1.8); opacity: 0.5; }
@@ -85,7 +109,7 @@
   </style>
 </head>
 <body>
-  <!-- Čtyři kontejnery – jeden pro každý gif soubor -->
+  <!-- Čtyři kontejnery pro GIFy -->
   <div class="gif-container" id="gifContainer"></div>
   <div class="gif-container" id="gifContainer2"></div>
   <div class="gif-container" id="gifContainer3"></div>
@@ -95,7 +119,7 @@
     <button class="dont-click" id="dontClickButton">Tak dělej!</button>
   </div>
 
-  <!-- Skrytý YouTube přehrávač – umístěn mimo viditelnou oblast -->
+  <!-- Skrytý přehrávač (mp3 soubor) – umístěn mimo viditelnou oblast -->
   <div id="youtubePlayer" style="position: absolute; left: -9999px; width: 0; height: 0;">
     <iframe id="ytplayer" type="text/html" width="0" height="0"
       src="Spor - Obsession.mp3"
@@ -104,44 +128,43 @@
   </div>
 
   <script>
-    // Referenční prvky kontejnerů
+    // Referenční prvky kontejnerů pro GIFy
     const gifContainer  = document.getElementById("gifContainer");
     const gifContainer2 = document.getElementById("gifContainer2");
     const gifContainer3 = document.getElementById("gifContainer3");
     const gifContainer4 = document.getElementById("gifContainer4");
 
-    // URL gifů – nahraďte cestami ke svým souborům
+    // Cesty ke GIF souborům – upravte podle vlastních zdrojů
     const gifUrl  = "crazy.gif";
     const gifUrl2 = "yay.gif";
-    const gifUrl3 = "cat.gif";  // nový gif soubor 3
-    const gifUrl4 = "explosion.gif";   // nový gif soubor 4
+    const gifUrl3 = "cat.gif";
+    const gifUrl4 = "explosion.gif";
 
-    let gifCount = 4;       // počáteční počet gifů na každý kontejner
-    const maxGifs = 100;    // celkový maximální počet gifů, zvýšeno z 60 na 100
-    let gifsArray = [];     // Pole pro uložení dat o každém gifu (pozice, rychlost, atd.)
+    let gifCount = 4;       // Počáteční počet GIFů na každý kontejner
+    const maxGifs = 100;    // Maximální počet GIFů
+    let gifsArray = [];     // Pole pro uložení dat o jednotlivých GIFech
     let globalGifCounter = 0; // Globální čítač pro speciální efekty
 
-    // Funkce, která přidá do zadaného kontejneru zadaný počet gifů z URL
+    // Funkce pro přidání GIFů do zadaného kontejneru
     function addGifs(container, url, count) {
       for (let i = 0; i < count; i++) {
         if (gifsArray.length >= maxGifs) return;
         globalGifCounter++;
 
-        // Vytvoříme obal pro gif
+        // Vytvoření obalu pro jeden GIF
         let wrapper = document.createElement("div");
         wrapper.classList.add("gif-wrapper");
 
-        // Vytvoříme samotný obrázek
+        // Vytvoření obrázku a nastavení cesty
         let img = document.createElement("img");
         img.src = url;
-        // Každý čtvrtý gif získá animaci balónu
+        // Každý čtvrtý GIF dostane animaci "balloon"
         if (globalGifCounter % 4 === 0) {
           img.classList.add("balloon");
         }
-        // Vložíme obrázek do obalu
         wrapper.appendChild(img);
 
-        // Náhodná počáteční pozice s ohledem na rozměry gifu (100×100)
+        // Náhodná počáteční pozice (s ohledem na rozměry)
         const gifWidth = 100;
         const gifHeight = 100;
         let posX = Math.random() * (window.innerWidth - gifWidth);
@@ -149,21 +172,18 @@
         wrapper.style.left = posX + "px";
         wrapper.style.top  = posY + "px";
 
-        // Každý třetí gif získá efekt náhodného škálování
-        let isRandom = false;
+        // Každý třetí GIF získá efekt náhodného škálování
         if (globalGifCounter % 3 === 0) {
           wrapper.classList.add("random-scale");
-          isRandom = true;
         }
 
-        // Přidáme obal do kontejneru
         container.appendChild(wrapper);
 
-        // Náhodný vektor pohybu (efekt odrážení jako u DVD loga)
+        // Nastavení náhodného vektoru pohybu (podobně jako u klasického DVD loga)
         let vx = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1);
         let vy = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1);
 
-        // Uložíme data o gifu
+        // Uložení dat o GIFu do pole
         gifsArray.push({
           element: wrapper,
           x: posX,
@@ -172,18 +192,18 @@
           vy: vy,
           width: gifWidth,
           height: gifHeight,
-          isRandom: isRandom
+          isRandom: (globalGifCounter % 3 === 0)
         });
       }
     }
 
-    // Přidáme počáteční sadu gifů do všech kontejnerů
+    // Přidání počáteční sady GIFů do všech kontejnerů
     addGifs(gifContainer,  gifUrl,  4);
     addGifs(gifContainer2, gifUrl2, 4);
     addGifs(gifContainer3, gifUrl3, 4);
     addGifs(gifContainer4, gifUrl4, 4);
-
-    // Každé 2 sekundy přidáme další sadu gifů (dokud nedosáhneme maxGifs)
+    
+    // Každé 2 sekundy se přidá další sada GIFů, dokud nedosáhneme maxima
     let interval = setInterval(() => {
       addGifs(gifContainer,  gifUrl,  4);
       addGifs(gifContainer2, gifUrl2, 4);
@@ -194,13 +214,12 @@
       }
     }, 2000);
 
-    // Animace – aktualizace pozic gifů (simulace pohybu s odrazy od okrajů)
+    // Funkce pro aktualizaci pozic GIFů – simulace pohybu s odrazy od okrajů
     function updateGifs() {
       for (let gif of gifsArray) {
         gif.x += gif.vx;
         gif.y += gif.vy;
 
-        // Odraz od levého a horního okraje
         if (gif.x <= 0) {
           gif.x = 0;
           gif.vx = -gif.vx;
@@ -209,7 +228,6 @@
           gif.y = 0;
           gif.vy = -gif.vy;
         }
-        // Odraz od pravého a spodního okraje
         if (gif.x >= window.innerWidth - gif.width) {
           gif.x = window.innerWidth - gif.width;
           gif.vx = -gif.vx;
@@ -218,7 +236,6 @@
           gif.y = window.innerHeight - gif.height;
           gif.vy = -gif.vy;
         }
-
         gif.element.style.left = gif.x + "px";
         gif.element.style.top  = gif.y + "px";
       }
@@ -226,23 +243,21 @@
     }
     requestAnimationFrame(updateGifs);
 
-    // Náhodné škálování pro každý třetí gif – každé 2 sekundy nastavíme nový náhodný faktor
+    // Každé 2 sekundy se u každého třetího GIFu nastaví náhodná škála
     setInterval(() => {
       gifsArray.forEach(gif => {
         if (gif.isRandom) {
-          // Náhodná hodnota mezi 0.8 a 1.5
           let scale = (0.8 + Math.random() * 0.7).toFixed(2);
           gif.element.style.transform = "scale(" + scale + ")";
         }
       });
     }, 2000);
 
-    // Chování tlačítka – při každém kliknutí se přesune s explozní animací; přesměrování až po pátém kliknutí
+    // Chování tlačítka – při každém kliknutí se tlačítko přesune s explozní animací
     const button = document.getElementById("dontClickButton");
     let buttonClicks = 0;
     button.addEventListener("click", function() {
       buttonClicks++;
-      // Přidáme třídu "explode" pro animaci výbuchu a poté ji odstraníme
       button.classList.add("explode");
       button.addEventListener("animationend", function handler() {
         button.classList.remove("explode");
