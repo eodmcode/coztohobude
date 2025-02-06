@@ -1,219 +1,249 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ruleta</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Výherní Automat</title>
   <style>
     body {
       background: #222;
       color: #fff;
+      text-align: center;
       font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
       margin: 0;
       padding: 20px;
     }
     h1 {
       margin-bottom: 20px;
     }
-    /* Obal, který obsahuje jak otáčející se kolo, tak statickou šipku */
-    .wheel-wrapper {
-      position: relative;
-      width: 500px;
-      height: 500px;
-      margin-bottom: 20px;
+    /* Zvětšený kontejner automatu */
+    .slot-machine {
+      margin: 20px auto;
+      width: 600px;
     }
-    /* Kontejner, kterému budeme aplikovat rotaci */
-    .wheel-container {
+    .reels {
+      display: flex;
+      justify-content: center;
+    }
+    /* Zvětšené válce (150×150 px) */
+    .reel {
+      width: 150px;
+      height: 150px;
+      border: 2px solid #fff;
+      margin: 0 10px;
+      overflow: hidden;
+      position: relative;
+      background: #000;
+    }
+    .reel-inner {
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      /* Pozor: transform se aplikuje pouze na tento kontejner, šipka mimo něj zůstane statická */
     }
-    /* Canvas s ruletou */
-    canvas {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
+    .reel img {
+      width: 150px;
+      height: 150px;
       display: block;
     }
-    /* Statická šipka – ukazuje směrem dolů (tedy na horní střed kola) */
-    .pointer {
-      position: absolute;
-      top: -20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 20px solid transparent;
-      border-right: 20px solid transparent;
-      border-bottom: 20px solid #fff;
-      z-index: 10;
-    }
+    /* Tlačítko – zvětšené, s větším písmem, větším paddingem a červeným pozadím */
     .spin-btn {
-      padding: 10px 20px;
-      font-size: 20px;
+      padding: 15px 30px;
+      font-size: 24px;
+      margin-top: 20px;
       cursor: pointer;
-      background: #e67e22;
+      background: #ff0000;
       border: none;
       border-radius: 5px;
       color: #fff;
-      margin-bottom: 20px;
     }
     .spin-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
     .result {
-      font-size: 24px;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    /* Prize obrázek – skrytý dokud se nezobrazí výhra */
-    #prizeImage {
-      display: none;
-      max-width: 100%;
       margin-top: 20px;
+      font-size: 24px;
+    }
+    /* Vycentrovaný obrázek při výhře s vlnící animací */
+    #prizeImage {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 500px;
+      display: none;
+      z-index: 999;
+      animation: wave 2s infinite;
+    }
+    /* Keyframes pro vlnící animaci */
+    @keyframes wave {
+      0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+      25% { transform: translate(-50%, -50%) scale(1.1) rotate(5deg); }
+      50% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+      75% { transform: translate(-50%, -50%) scale(1.1) rotate(-5deg); }
+      100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+    }
+    /* Kontejner pro gif pozadí – nyní bez atributu src a se zvýšeným z-indexem */
+    #gifBackground {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      display: none;
     }
   </style>
 </head>
 <body>
-  <h1>Ruleta</h1>
-  <!-- Obal pro kolo a statickou šipku -->
-  <div class="wheel-wrapper">
-    <!-- Otáčející se kolo -->
-    <div class="wheel-container" id="wheelContainer">
-      <canvas id="rouletteCanvas" width="500" height="500"></canvas>
+  <h1>Zatoč si</h1>
+  <div class="slot-machine">
+    <div class="reels">
+      <div class="reel" id="reel1">
+        <div class="reel-inner"></div>
+      </div>
+      <div class="reel" id="reel2">
+        <div class="reel-inner"></div>
+      </div>
+      <div class="reel" id="reel3">
+        <div class="reel-inner"></div>
+      </div>
     </div>
-    <!-- Statická šipka (pointer) -->
-    <div class="pointer"></div>
   </div>
-  <button class="spin-btn" id="spinBtn">Roztoč ruletu</button>
+  <!-- Text tlačítka změněn na "Mačkej!" -->
+  <button class="spin-btn" id="spinBtn">Mačkej!</button>
   <div class="result" id="result"></div>
-  <!-- Obrázek, který se zobrazí při výhře -->
-  <img id="prizeImage" src="prize.jpg" alt="Gratulujeme, vyhrál(a) jsi!" />
+  <!-- Obrázek, který se zobrazí při výhře, vycentrovaný na obrazovce s animací -->
+  <img id="prizeImage" src="voucher.png" alt="Gratulujeme, vyhrál(a) jsi!">
+  <!-- Kontejner pro gif pozadí -->
+  <div id="gifBackground"></div>
+  <!-- Audio přehrávač – soubor se spustí od 1:05 (65 s) -->
+  <audio id="prizeAudio" src="Spor - Obsession.mp3"></audio>
 
   <script>
-    // Seznam sektorů – nyní celkem 5 polí, přičemž sektor s indexem 2 bude považován za výherní.
-    const sectors = ["Políčko 1", "Políčko 2", "Výhra", "Políčko 4", "Políčko 5"];
-    // Cesty k obrázkům, které budou použity jako výplně jednotlivých sektorů.
-    const imageSources = ["kara.jpg", "https://1263469901.rsc.cdn77.org/images/2023/10/05/upload_15304010554117241662.jpg", "img3.jpg", "img4.jpg", "img5.jpg"];
-
-    // Pole pro načtené obrázky
-    let images = [];
-    let loadedCount = 0;
-    for (let i = 0; i < imageSources.length; i++) {
-      let img = new Image();
-      img.src = imageSources[i];
-      img.onload = function() {
-        loadedCount++;
-        if (loadedCount === imageSources.length) {
-          drawWheel();
-        }
-      };
-      images.push(img);
-    }
-
-    const canvas = document.getElementById("rouletteCanvas");
-    const ctx = canvas.getContext("2d");
-    const wheelContainer = document.getElementById("wheelContainer");
-    const spinBtn = document.getElementById("spinBtn");
-    const resultDiv = document.getElementById("result");
-    const prizeImage = document.getElementById("prizeImage");
-
-    const numSectors = sectors.length; // 5 sektorů
-    const sectorAngle = 2 * Math.PI / numSectors;
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const radius = Math.min(centerX, centerY) - 20; // ponecháme okraj
-
-    // Kreslení ruletového kola – každý sektor je vyplněn obrázkovým patternem.
-    function drawWheel() {
-      for (let i = 0; i < numSectors; i++) {
-        const startAngle = i * sectorAngle;
-        const endAngle = startAngle + sectorAngle;
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-        ctx.closePath();
-        let pattern = ctx.createPattern(images[i], 'no-repeat');
-        ctx.fillStyle = pattern;
-        ctx.fill();
-        ctx.restore();
-
-        // Vykreslíme text do středu sektoru
-        ctx.save();
-        ctx.translate(centerX, centerY);
-        const textAngle = startAngle + sectorAngle / 2;
-        ctx.rotate(textAngle);
-        ctx.textAlign = "right";
-        ctx.fillStyle = "#fff";
-        ctx.font = "20px Arial";
-        ctx.fillText(sectors[i], radius - 10, 10);
-        ctx.restore();
+    document.addEventListener("DOMContentLoaded", function() {
+      // Pole obrázků symbolů (celkem 5)
+      const symbols = ["crazy.gif", "yay.gif", "cat.gif", "exlplosion.gif", "kara.jpg"];
+      
+      let spinCount = 0;
+      let finalIndices = [null, null, null];
+      let reelsFinished = 0;
+      // Výška symbolu – 150 px (kvůli zvětšeným válcům)
+      const symbolHeight = 150;
+      
+      // Reference na elementy jednotlivých válců
+      const reelElements = [
+        document.getElementById("reel1").querySelector(".reel-inner"),
+        document.getElementById("reel2").querySelector(".reel-inner"),
+        document.getElementById("reel3").querySelector(".reel-inner")
+      ];
+      
+      // Inicializace válců – pro plynulý posun použijeme dvakrát opakovaný seznam symbolů
+      function initReels() {
+        reelElements.forEach(function(reelInner) {
+          reelInner.innerHTML = "";
+          symbols.forEach(function(symbol) {
+            const img = document.createElement("img");
+            img.src = symbol;
+            reelInner.appendChild(img);
+          });
+          symbols.forEach(function(symbol) {
+            const img = document.createElement("img");
+            img.src = symbol;
+            reelInner.appendChild(img);
+          });
+        });
       }
-    }
-
-    // Proměnná pro aktuální rotaci kola (v °)
-    let currentRotation = 0;
-    // Počítadlo spinů
-    let spinCount = 0;
-    // Určíme, který sektor (index) je výherní – zde je to sektor s indexem 2.
-    const winningSectorIndex = 2;
-
-    spinBtn.addEventListener("click", () => {
-      spinBtn.disabled = true;
-      resultDiv.textContent = "";
-      // Při každém spin zvýšíme čítač
-      spinCount++;
-      // Skryjeme případně již zobrazený obrázek výhry
-      prizeImage.style.display = "none";
-
-      // Vypočítáme náhodný počet otáček: 5–9 plných otáček plus náhodný úhel (0–360°)
-      const fullSpins = Math.floor(Math.random() * 5) + 5;  // 5 až 9 plných otáček
-      const extraDegrees = Math.floor(Math.random() * 360);
-      const totalDegrees = fullSpins * 360 + extraDegrees;
-      currentRotation += totalDegrees;
-
-      // Aplikujeme otáčení pouze na kontejner s kolem
-      wheelContainer.style.transition = "transform 5s cubic-bezier(0.33, 1, 0.68, 1)";
-      wheelContainer.style.transform = `rotate(${currentRotation}deg)`;
-
-      // Po skončení animace vyhodnotíme výsledek
-      wheelContainer.addEventListener("transitionend", function handler() {
-        // Odstraníme přechod, abychom mohli otáčet znovu
-        wheelContainer.style.transition = "none";
-
-        // Normalizujeme úhel do intervalu 0–360°
-        const normalized = currentRotation % 360;
-        // UPOZORNĚNÍ: Vzhledem k tomu, že šipka je umístěna nahoře,
-        // přičteme 90° (protože 0° v našem kreslení je vpravo).
-        const adjustedAngle = (normalized + 90) % 360;
-        const winningIndex = Math.floor(adjustedAngle / (360 / numSectors));
-
-        // Pokud ještě nebylo spinuto 10x, výhra není možná.
-        if (spinCount < 10) {
-          resultDiv.textContent = "Výhra je možná až po 10 zatočeních. Zatím jsi spinul(a) " + spinCount + " krát.";
+      initReels();
+      
+      const spinBtn = document.getElementById("spinBtn");
+      const resultDiv = document.getElementById("result");
+      const prizeImage = document.getElementById("prizeImage");
+      const prizeAudio = document.getElementById("prizeAudio");
+      const gifBackground = document.getElementById("gifBackground");
+      
+      // Přehrání mp3 od 1:05 (65 sekund)
+      function playPrizeSound() {
+        prizeAudio.currentTime = 65;
+        prizeAudio.play();
+      }
+      
+      // Funkce, která vytvoří 250 gifů na pozadí (200 + 50 navíc)
+      function launchGifs() {
+        gifBackground.innerHTML = "";
+        gifBackground.style.display = "block";
+        for (let i = 0; i < 250; i++) {
+          const img = document.createElement("img");
+          img.src = "cat.gif"; // Ujistěte se, že tento soubor existuje
+          img.style.position = "absolute";
+          img.style.top = Math.random() * 100 + "%";
+          img.style.left = Math.random() * 100 + "%";
+          img.style.width = "50px";
+          img.style.height = "50px";
+          gifBackground.appendChild(img);
+        }
+      }
+      
+      spinBtn.addEventListener("click", function() {
+        spinBtn.disabled = true;
+        resultDiv.textContent = "";
+        prizeImage.style.display = "none";
+        gifBackground.style.display = "none";
+        reelsFinished = 0;
+        spinCount++;
+        
+        // Spuštění animace pro každý válec
+        reelElements.forEach(function(reelInner, index) {
+          let finalIndex = Math.floor(Math.random() * symbols.length);
+          finalIndices[index] = finalIndex;
+          const fullSpins = 5;
+          const totalDistance = (fullSpins * symbols.length + finalIndex) * symbolHeight;
+          
+          reelInner.style.transition = "transform " + (2 + index * 0.5) + "s ease-out";
+          reelInner.style.transform = "translateY(-" + totalDistance + "px)";
+          
+          reelInner.addEventListener("transitionend", function handler() {
+            reelInner.style.transition = "none";
+            reelInner.style.transform = "translateY(-" + (finalIndex * symbolHeight) + "px)";
+            reelInner.removeEventListener("transitionend", handler);
+            reelsFinished++;
+            if (reelsFinished === reelElements.length) {
+              evaluateResult();
+            }
+          });
+        });
+      });
+      
+      // Vyhodnocení výsledku spinů
+      function evaluateResult() {
+        // Pokud je spinCount mezi 10 a 15, výhra je jistá – nuceně nastavíme stejné symboly
+        if (spinCount >= 10 && spinCount <= 15) {
+          const forcedIndex = 0; // Můžete zvolit libovolný index
+          finalIndices = [forcedIndex, forcedIndex, forcedIndex];
+          reelElements.forEach(function(reelInner) {
+            reelInner.style.transition = "none";
+            reelInner.style.transform = "translateY(-" + (forcedIndex * symbolHeight) + "px)";
+          });
+          resultDiv.textContent = "Všechno nejlepší!";
+          prizeImage.style.display = "block";
+          playPrizeSound();
+          launchGifs();
+        } else if (spinCount < 10) {
+          resultDiv.textContent = "Tak ale děleeeej";
         } else {
-          // Po 10 zatočeních je výhra možná – pokud se kolo zastaví na výherním sektoru (index 2)
-          if (winningIndex === winningSectorIndex) {
-            resultDiv.textContent = "Gratulujeme, vyhrál(a) jsi!";
+          // Pro spinCount vyšší než 15 – výhra je jen při shodě všech symbolů
+          if (finalIndices[0] === finalIndices[1] && finalIndices[1] === finalIndices[2]) {
+            resultDiv.textContent = "Všechno nejlepší!";
             prizeImage.style.display = "block";
+            playPrizeSound();
+            launchGifs();
           } else {
-            resultDiv.textContent = "Nevyhrál(a) jsi, zkus to znovu.";
+            resultDiv.textContent = "Tak ale děleeeej";
           }
         }
-
         spinBtn.disabled = false;
-        wheelContainer.removeEventListener("transitionend", handler);
-      });
+      }
     });
   </script>
 </body>
